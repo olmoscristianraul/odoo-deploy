@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN mkdir -p /mnt/custom_addons && chmod -R 777 /mnt/custom_addons
 RUN mkdir -p /mnt/extra_addons && chmod -R 777 /mnt/extra_addons
 
-# Clonar Odoo
+# Clonar Odoo (¡AQUÍ ESTÁ EL CAMBIO PRINCIPAL!)
 WORKDIR /opt
 RUN git clone https://github.com/odoo/odoo.git --branch 17.0 --single-branch odoo
 
@@ -19,14 +19,14 @@ RUN git clone https://github.com/odoo/odoo.git --branch 17.0 --single-branch odo
 WORKDIR /opt/odoo
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Instalar pyright y generar los stubs  <- ¡AQUÍ!
-RUN pip install --no-cache-dir pyright
+# Instalar pyright y generar los stubs
+RUN pip install --no-cache-dir pyright pre-commit
 RUN pyright --createstub odoo
 
-# Copiar requirements.txt (para dependencias de módulos personalizados)
+# Copiar requirements.txt (para dependencias de módulos personalizados, si las hay)
 COPY requirements.txt /tmp/
 
-# Instalar dependencias de módulos personalizados
+# Instalar dependencias de módulos personalizados (si las hay)
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Exponer el puerto de Odoo
