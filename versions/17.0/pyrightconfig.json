@@ -1,0 +1,9 @@
+{
+  "stubPath": "/opt/odoo/typings",
+    "reportMissingImports": "warning",
+    "reportMissingModuleSource": false,
+    "extraPaths": [
+      "../../custom_addons",
+      "../../extra_addons"
+    ]
+}
