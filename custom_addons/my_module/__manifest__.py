@@ -1,7 +1,7 @@
 {
-    'name': 'Modulo demo',
+    'name': 'My Module',
     'version': '1.0',
-    'author': 'Cristian',
+    'author': 'Tu Nombre',
     'category': 'Uncategorized',
     'depends': ['base'],
     'data': [],

@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Odoo Debug",
+            "type": "python",
+            "request": "attach",
+            "port": 8888,
+            "host": "localhost",
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/custom_addons",
+                    "remoteRoot": "/mnt/custom_addons"
+                },
+                {
+                  "localRoot": "${workspaceFolder}/versions/17.0",
+                  "remoteRoot": "/opt/odoo"
+              }
+            ]
+        }
+    ]
+}

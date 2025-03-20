@@ -4,10 +4,10 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: "@HCsinergia2025"  # ¡Usa la contraseña de prueba!
-      POSTGRES_DB: odoo_db  # Base de datos para desarrollo
+      POSTGRES_PASSWORD: "@HCsinergia2025"
+      POSTGRES_DB: odoo_db
     volumes:
-      - db_data:/var/lib/postgresql/data  # Named volume
+      - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
@@ -19,21 +19,25 @@ services:
       - db
     ports:
       - "8069:8069"
-      - "8888:8888"
+      - "8888:8888" #Debug port
     volumes:
       - ./odoo.conf:/etc/odoo/odoo.conf
       - ../../custom_addons:/mnt/custom_addons
       - ../../extra_addons:/mnt/extra_addons
-      - odoo_web_data:/var/lib/odoo  # Named volume
-      - ./typings:/opt/odoo/typings #  volume para pyright
+      - odoo_web_data:/var/lib/odoo
+      - ./typings:/opt/odoo/typings
     environment:
       HOST: db
-      DB_USER: odoo
-      DB_PASSWORD: "@HCsinergia2025"  # ¡Usa la contraseña de prueba!
-      DB_NAME: odoo_db  # DB name para desarrollo
-      ODOO_ADMIN_PASSWORD: "@HCsinergia2025"  # ¡Usa la contraseña de prueba!
-    # No entrypoint override. Use the CMD from the Dockerfile
+      USER: odoo # Odoo non-root user
+      PASSWORD: "@HCsinergia2025"
+      ODOO_ADMIN_PASSWORD: "@HCsinergia2025"
+    networks: # Add network configuration
+      - odoo_network
 
-volumes: # Declare named volumes
-    db_data:
-    odoo_web_data:
+volumes:
+  db_data:
+  odoo_web_data:
+
+networks: # Define the network
+  odoo_network:
+    driver: bridge
