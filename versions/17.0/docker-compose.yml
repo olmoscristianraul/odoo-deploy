@@ -4,7 +4,7 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: myodoo  # ¡CAMBIA ESTO EN PRODUCCIÓN!
+      POSTGRES_PASSWORD: myodoo
       POSTGRES_DB: postgres
     volumes:
       - ../../pgdb-data:/var/lib/postgresql/data
@@ -28,7 +28,7 @@ services:
     environment:
       HOST: db
       DB_USER: odoo
-      DB_PASSWORD: myodoo  # ¡CAMBIA ESTO EN PRODUCCIÓN!
+      DB_PASSWORD: myodoo
       DB_NAME: postgres
-      ODOO_ADMIN_PASSWORD: admin  # ¡CAMBIA ESTO EN PRODUCCIÓN!
+      ODOO_ADMIN_PASSWORD: admin  
     entrypoint: /opt/odoo/odoo-bin -c /etc/odoo/odoo.conf --stop-after-init -d odoo -i base --test-enable

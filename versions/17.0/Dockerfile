@@ -1,24 +1,24 @@
-FROM python:3.9-buster
+FROM python:3.10-buster
 
-# --- Troubleshooting Stage: Find libxcb or Alternatives (Temporary) ---
-# This stage is ONLY for finding the correct package name. It won't be part of the final image.
-FROM python:3.9-buster as dependency-finder
+# --- Troubleshooting Stage (Keep as-is, for now) ---
+FROM python:3.10-buster as dependency-finder
 
 RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
 
-# Search for libxcb-dev and related packages.  The output of this command is KEY.
+# Search for libxcb-dev
 RUN apt-cache search libxcb
 
-# Install fallback X11 dev libraries (in case we can't find a specific libxcb-dev).
+# Install fallback X11 dev libraries
 RUN apt-get install -y --no-install-recommends libx11-dev libxext-dev
 
 
 # --- Main Odoo Stage ---
-# This is the stage that builds the actual Odoo image.
-FROM python:3.9-buster
+FROM python:3.10-buster
 
-# Install system dependencies.  REPLACE placeholder with the correct package name(s)
-# found in the dependency-finder stage.
+# Check Python Version (for debugging)
+RUN python3 --version
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     build-essential \
@@ -38,16 +38,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     libxcb1-dev \
     && rm -rf /var/lib/apt/lists/*
+
 # Create directories for addons
 RUN mkdir -p /mnt/custom_addons && chmod -R 777 /mnt/custom_addons
 RUN mkdir -p /mnt/extra_addons && chmod -R 777 /mnt/extra_addons
 
-# Clone Odoo
+# Clone Odoo (with --depth 1)
 WORKDIR /opt
-RUN git clone https://github.com/odoo/odoo.git --branch 17.0 --single-branch odoo
+#RUN git clone https://github.com/odoo/odoo.git --branch 17.0 --single-branch odoo
+RUN git clone https://github.com/odoo/odoo.git --branch 17.0 --depth 1 odoo
+
 
 # Install Odoo's Python dependencies
 WORKDIR /opt/odoo
+
+# Upgrade setuptools and wheel *BEFORE* installing requirements.
+RUN pip install --no-cache-dir --upgrade setuptools wheel
+# Install Cython explicitly
+RUN pip install --no-cache-dir Cython
+# Pin gevent (add to Odoo's requirements.txt)
+#RUN echo "gevent==21.8.0" >> requirements.txt
+# --- KEY STEP: Replace gevent version BEFORE installing ---
+RUN sed -i 's/^\s*gevent.*$/gevent==22.10.2/' requirements.txt
+# ALSO replace greenlet:
+RUN sed -i 's/^\s*greenlet.*$/greenlet>=2.0.0/' requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install pyright and generate stubs
