@@ -1,22 +1,4 @@
-FROM python:3.10-buster
-
-# --- Troubleshooting Stage (Keep as-is, for now) ---
-FROM python:3.10-buster as dependency-finder
-
-RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
-
-# Search for libxcb-dev
-RUN apt-cache search libxcb
-
-# Install fallback X11 dev libraries
-RUN apt-get install -y --no-install-recommends libx11-dev libxext-dev
-
-
-# --- Main Odoo Stage ---
-FROM python:3.10-buster
-
-# Check Python Version (for debugging)
-RUN python3 --version
+FROM python:3.10-buster as builder
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -43,37 +25,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN mkdir -p /mnt/custom_addons && chmod -R 777 /mnt/custom_addons
 RUN mkdir -p /mnt/extra_addons && chmod -R 777 /mnt/extra_addons
 
-# Clone Odoo (with --depth 1)
+# Clone Odoo (with --depth 1 for speed)
 WORKDIR /opt
-#RUN git clone https://github.com/odoo/odoo.git --branch 17.0 --single-branch odoo
-RUN git clone https://github.com/odoo/odoo.git --branch 17.0 --depth 1 odoo
+RUN git clone https://github.com/odoo/odoo.git --branch 17.0 --single-branch --depth 1 odoo
 
-
-# Install Odoo's Python dependencies
 WORKDIR /opt/odoo
 
-# Upgrade setuptools and wheel *BEFORE* installing requirements.
-RUN pip install --no-cache-dir --upgrade setuptools wheel
-# Install Cython explicitly
-RUN pip install --no-cache-dir Cython
-# Pin gevent (add to Odoo's requirements.txt)
-#RUN echo "gevent==21.8.0" >> requirements.txt
-# --- KEY STEP: Replace gevent version BEFORE installing ---
+# --- KEY STEP: Replace gevent and greenlet versions BEFORE installing ---
 RUN sed -i 's/^\s*gevent.*$/gevent==22.10.2/' requirements.txt
-# ALSO replace greenlet:
 RUN sed -i 's/^\s*greenlet.*$/greenlet>=2.0.0/' requirements.txt
+
+# Install Odoo's Python dependencies (now with the correct gevent and greenlet versions).
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install pyright and generate stubs
+# Install pyright and pre-commit (for stubs and linting)
 RUN pip install --no-cache-dir pyright pre-commit
+
+# Generate stubs
 RUN pyright --createstub odoo
 
-# Install custom module dependencies (if any)
-COPY requirements.txt /tmp/
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+# --- Final Stage ---
+FROM python:3.10-buster
+COPY --from=builder /opt/odoo /opt/odoo
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
-# Expose Odoo's port
+# Create the addon directories.
+RUN mkdir -p /mnt/custom_addons
+RUN mkdir -p /mnt/extra_addons
+
+# Expose the port
 EXPOSE 8069
 
-# Default command
+# Set the default command.  Run Odoo normally.
 CMD ["python3", "/opt/odoo/odoo-bin", "-c", "/etc/odoo/odoo.conf"]

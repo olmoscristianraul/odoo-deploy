@@ -4,14 +4,14 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: myodoo
-      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: "@HCsinergia2025"  # ¡Usa la contraseña de prueba!
+      POSTGRES_DB: odoo_db  # Base de datos para desarrollo
     volumes:
-      - ../../pgdb-data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data  # Named volume
     ports:
       - "5432:5432"
 
-  odoo:  # Este es el servicio 'odoo'
+  odoo:
     build:
       context: .
       dockerfile: Dockerfile
@@ -24,11 +24,16 @@ services:
       - ./odoo.conf:/etc/odoo/odoo.conf
       - ../../custom_addons:/mnt/custom_addons
       - ../../extra_addons:/mnt/extra_addons
-      - ../../odoo-web-data:/var/lib/odoo
+      - odoo_web_data:/var/lib/odoo  # Named volume
+      - ./typings:/opt/odoo/typings #  volume para pyright
     environment:
       HOST: db
       DB_USER: odoo
-      DB_PASSWORD: myodoo
-      DB_NAME: postgres
-      ODOO_ADMIN_PASSWORD: admin  
-    entrypoint: /opt/odoo/odoo-bin -c /etc/odoo/odoo.conf --stop-after-init -d odoo -i base --test-enable
+      DB_PASSWORD: "@HCsinergia2025"  # ¡Usa la contraseña de prueba!
+      DB_NAME: odoo_db  # DB name para desarrollo
+      ODOO_ADMIN_PASSWORD: "@HCsinergia2025"  # ¡Usa la contraseña de prueba!
+    # No entrypoint override. Use the CMD from the Dockerfile
+
+volumes: # Declare named volumes
+    db_data:
+    odoo_web_data:
